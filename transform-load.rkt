@@ -143,10 +143,11 @@
                                         (flatten _)
                                         (filter (λ (o) (not (empty? (option-underlying o)))) _)
                                         (map (λ (o) (flatten-option o)) _))]
-                       [strikes (list->set (map (λ (s) (option-strike (closest-strike s all-options))) target-strikes))]
-                       [expirations (list->set (map (λ (e) (option-expiration (closest-expiration e all-options))) target-expirations))]
-                       [options (filter (λ (o) (and (set-member? strikes (option-strike o))
-                                                    (set-member? expirations (option-expiration o)))) all-options)])
+                       [options (flatten (map (λ (te) (let* ([e (option-expiration (closest-expiration te all-options))]
+                                                             [f (filter (λ (o) (equal? e (option-expiration o))) all-options)])
+                                                        (map (λ (ts) (let ([s (option-strike (closest-strike ts f))])
+                                                                       (filter (λ (o) (equal? s (option-strike o))) f))) target-strikes)))
+                                              target-expirations))])
                   (with-handlers ([exn:fail? (λ (e) (displayln (string-append "Failed to process "
                                                                               ticker-symbol
                                                                               " for date "
