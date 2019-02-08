@@ -78,6 +78,38 @@
          (first options)
          (rest options)))
 
+(define (get-options html-str)
+  (let* ([xexp (html->xexp (~> html-str
+                               (string-replace _ "\r\n" "")
+                               (string-replace _ "\t" "")
+                               (string-replace _ "&nbsp;" "")
+                               (string-replace _ "<nobr>" "")
+                               (string-replace _ "</nobr>" "")))]
+         [mark-price (~> ((sxpath '(html body table tr td (table 5) (tr 2) (td 1))) xexp)
+                         (first _)
+                         (second _)
+                         (string->number _ 10 'number-or-false 'decimal-as-exact))]
+         [target-strikes (list (* mark-price 96/100) (* mark-price 98/100) mark-price
+                               (* mark-price 102/100) (* mark-price 104/100))]
+         [target-expirations (list (time-utc->date (add-duration (date->time-utc (folder-date))
+                                                                 (make-time 'time-duration 0 (* 60 60 24 7 2))))
+                                   (time-utc->date (add-duration (date->time-utc (folder-date))
+                                                                 (make-time 'time-duration 0 (* 60 60 24 7 4))))
+                                   (time-utc->date (add-duration (date->time-utc (folder-date))
+                                                                 (make-time 'time-duration 0 (* 60 60 24 7 8)))))]
+         [all-options (~> (map (λ (exp-table)
+                                 (map (λ (row) (list (extract-option row 0) (extract-option row -1)))
+                                      ((sxpath '(td table tr)) exp-table)))
+                               ((sxpath '(html body table tr td (table 9) tr)) xexp))
+                          (flatten _)
+                          (filter (λ (o) (not (empty? (option-underlying o)))) _)
+                          (map (λ (o) (flatten-option o)) _))])
+    (flatten (map (λ (te) (let* ([e (option-expiration (closest-expiration te all-options))]
+                                 [f (filter (λ (o) (equal? e (option-expiration o))) all-options)])
+                            (map (λ (ts) (let ([s (option-strike (closest-strike ts f))])
+                                           (filter (λ (o) (equal? s (option-strike o))) f))) target-strikes)))
+                  target-expirations))))
+
 (define base-folder (make-parameter "/var/tmp/oic/options-chains"))
 
 (define folder-date (make-parameter (current-date)))
@@ -118,47 +150,21 @@
     (let ([file-name (string-append (base-folder) "/" (date->string (folder-date) "~1") "/" (path->string p))]
           [ticker-symbol (string-replace (path->string p) ".html" "")])
       (call-with-input-file file-name
-        (λ (in) (let* ([xexp (html->xexp (~> (port->string in)
-                                             (string-replace _ "\r\n" "")
-                                             (string-replace _ "\t" "")
-                                             (string-replace _ "&nbsp;" "")
-                                             (string-replace _ "<nobr>" "")
-                                             (string-replace _ "</nobr>" "")))]
-                       [mark-price (~> ((sxpath '(html body table tr td (table 5) (tr 2) (td 1))) xexp)
-                                       (first _)
-                                       (second _)
-                                       (string->number _ 10 'number-or-false 'decimal-as-exact))]
-                       [target-strikes (list (* mark-price 96/100) (* mark-price 98/100) mark-price
-                                             (* mark-price 102/100) (* mark-price 104/100))]
-                       [target-expirations (list (time-utc->date (add-duration (date->time-utc (folder-date))
-                                                                               (make-time 'time-duration 0 (* 60 60 24 15))))
-                                                 (time-utc->date (add-duration (date->time-utc (folder-date))
-                                                                               (make-time 'time-duration 0 (* 60 60 24 30))))
-                                                 (time-utc->date (add-duration (date->time-utc (folder-date))
-                                                                               (make-time 'time-duration 0 (* 60 60 24 60)))))]
-                       [all-options (~> (map (λ (exp-table)
-                                               (map (λ (row) (list (extract-option row 0) (extract-option row -1)))
-                                                    ((sxpath '(td table tr)) exp-table)))
-                                             ((sxpath '(html body table tr td (table 9) tr)) xexp))
-                                        (flatten _)
-                                        (filter (λ (o) (not (empty? (option-underlying o)))) _)
-                                        (map (λ (o) (flatten-option o)) _))]
-                       [options (flatten (map (λ (te) (let* ([e (option-expiration (closest-expiration te all-options))]
-                                                             [f (filter (λ (o) (equal? e (option-expiration o))) all-options)])
-                                                        (map (λ (ts) (let ([s (option-strike (closest-strike ts f))])
-                                                                       (filter (λ (o) (equal? s (option-strike o))) f))) target-strikes)))
-                                              target-expirations))])
-                  (with-handlers ([exn:fail? (λ (e) (displayln (string-append "Failed to process "
-                                                                              ticker-symbol
-                                                                              " for date "
-                                                                              (date->string (folder-date) "~1")))
-                                               (displayln ((error-value->string-handler) e 1000))
-                                               (rollback-transaction dbc)
-                                               (set! insert-failure-counter (+ insert-failure-counter (length options))))])
-                    (set! insert-counter (+ insert-counter (length options)))
-                    (start-transaction dbc)
-                    (for-each (λ (o)
-                                (query-exec dbc "
+        (λ (in) (let ([html-str (port->string in)])
+                  (cond [(not (or (string-contains? html-str "No Options found")
+                                  (string-contains? html-str "SEARCH RESULTS")))
+                         (let ([options (get-options html-str)])
+                           (with-handlers ([exn:fail? (λ (e) (displayln (string-append "Failed to process "
+                                                                                       ticker-symbol
+                                                                                       " for date "
+                                                                                       (date->string (folder-date) "~1")))
+                                                        (displayln ((error-value->string-handler) e 1000))
+                                                        (rollback-transaction dbc)
+                                                        (set! insert-failure-counter (+ insert-failure-counter (length options))))])
+                             (set! insert-counter (+ insert-counter (length options)))
+                             (start-transaction dbc)
+                             (for-each (λ (o)
+                                         (query-exec dbc "
 insert into oic.option_chain
 (
   act_symbol,
@@ -193,21 +199,21 @@ insert into oic.option_chain
   $13
 ) on conflict (act_symbol, expiration, strike, call_put, date) do nothing;
 "
-                                            ticker-symbol
-                                            (date->string (option-expiration o) "~1")
-                                            (option-strike o)
-                                            (option-call-put o)
-                                            (date->string (folder-date) "~1")
-                                            (option-bid o)
-                                            (option-ask o)
-                                            (option-vol o)
-                                            (option-delta o)
-                                            (option-gamma o)
-                                            (option-theta o)
-                                            (option-vega o)
-                                            (option-rho o))) options)
-                    (commit-transaction dbc)
-                    (set! insert-success-counter (+ insert-success-counter (length options))))))))))
+                                                     ticker-symbol
+                                                     (date->string (option-expiration o) "~1")
+                                                     (option-strike o)
+                                                     (option-call-put o)
+                                                     (date->string (folder-date) "~1")
+                                                     (option-bid o)
+                                                     (option-ask o)
+                                                     (option-vol o)
+                                                     (option-delta o)
+                                                     (option-gamma o)
+                                                     (option-theta o)
+                                                     (option-vega o)
+                                                     (option-rho o))) options)
+                             (commit-transaction dbc)
+                             (set! insert-success-counter (+ insert-success-counter (length options)))))])))))))
 
 (disconnect dbc)
 

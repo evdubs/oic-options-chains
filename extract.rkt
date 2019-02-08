@@ -53,15 +53,21 @@
 
 (define sp500-symbols (query-list dbc "
 select
-  component_symbol
+  component_symbol as symbol
 from
   spdr.etf_holding
 where
   etf_symbol = 'SPY' and
-  component_symbol != 'LIN' and
+  date = (select max(date) from spdr.etf_holding)
+union
+select distinct
+  etf_symbol as symbol
+from
+  spdr.etf_holding
+where
   date = (select max(date) from spdr.etf_holding)
 order by
-  component_symbol;
+  symbol;
 "))
 
 (disconnect dbc)
