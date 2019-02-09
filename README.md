@@ -11,7 +11,7 @@ The provided schema.sql file shows the expected schema within the target Postgre
 This data is provided by the [nasdaq-symbols](https://github.com/evdubs/nasdaq-symbols) project. These programs currently (2019-02-06) 
 will just extract option chains for S&P 500 component companies. I will probably update this at some point to get options info for 
 popular ETFs as well. The transform/load script will just insert options expiring 2 weeks, 4 weeks, and 8 weeks from the current date 
-and they will also just grab the +/- 0%, 2%, and 4% strikes. This suits my purposes, but this filter can be removed if you want to
+and they will also just grab the +/- 0%, 2%, 4% and 8% strikes. This suits my purposes, but this filter can be removed if you want to
 insert everything.
 
 Finally, there is one parameter required to extract data correctly from OIC: j-session-id. You can find this value by doing the following:
