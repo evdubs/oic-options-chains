@@ -11,15 +11,22 @@
          tasks
          threading)
 
-(define (download-options-chains symbol session-id)
+(define cnt
+  (~> (string->url "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
+      (get-pure-port _)
+      (port->string _)
+      (regexp-match #rx"cnt=([A-F0-9]+)" _)
+      (second _)))
+
+(define (download-options-chains symbol cnt)
   (make-directory* (string-append "/var/tmp/oic/options-chains/" (date->string (current-date) "~1")))
   (call-with-output-file (string-append "/var/tmp/oic/options-chains/" (date->string (current-date) "~1") "/" symbol ".html")
     (λ (out) (with-handlers ([exn:fail:network:errno
                               (λ (errno error)
                                 (displayln (string-append "Encountered network error for " symbol))
                                 (displayln ((error-value->string-handler) error 1000)))])
-               (~> (string-append "https://oic.ivolatility.com/oic_adv_options.j;jsessionid=" session-id
-                                  "?ticker=" (string-replace symbol "." "/") "&exp_date=-1")
+               (~> (string-append "https://oic.ivolatility.com/oic_adv_options.j?cnt=" cnt
+                                  "&ticker=" (string-replace symbol "." "/") "&exp_date=-1")
                    (string->url _)
                    (get-pure-port _)
                    (copy-port _ out))))
@@ -31,15 +38,10 @@
 
 (define db-pass (make-parameter ""))
 
-(define j-session-id (make-parameter ""))
-
 (command-line
  #:program "racket extract.rkt"
  #:once-each
- [("-j" "--j-session-id") session-id
-                          "J Session Id"
-                          (j-session-id session-id)]
- [("-n" "--db-name") name
+  [("-n" "--db-name") name
                      "Database name. Defaults to 'local'"
                      (db-name name)]
  [("-p" "--db-pass") password
@@ -76,7 +78,7 @@ order by
 
 (define delays (map (λ (x) (* delay-interval x)) (range 0 (length sp500-symbols))))
 
-(with-task-server (for-each (λ (l) (schedule-delayed-task (λ () (download-options-chains (first l) (j-session-id)))
+(with-task-server (for-each (λ (l) (schedule-delayed-task (λ () (download-options-chains (first l) cnt))
                                                           (second l)))
                             (map list sp500-symbols delays))
   ; add a final task that will halt the task server
