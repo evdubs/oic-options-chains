@@ -89,8 +89,9 @@
                          (first _)
                          (second _)
                          (string->number _ 10 'number-or-false 'decimal-as-exact))]
-         [target-strikes (list (* mark-price 92/100) (* mark-price 96/100) (* mark-price 98/100) mark-price
-                               (* mark-price 102/100) (* mark-price 104/100) (* mark-price 108/100))]
+         [target-strikes (list (* mark-price 85/100) (* mark-price 90/100) (* mark-price 93/100) (* mark-price 96/100)
+                               (* mark-price 98/100) mark-price (* mark-price 102/100)
+                               (* mark-price 104/100) (* mark-price 107/100) (* mark-price 110/100) (* mark-price 115/100))]
          [target-expirations (list (time-utc->date (add-duration (date->time-utc (folder-date))
                                                                  (make-time 'time-duration 0 (* 60 60 24 7 2))))
                                    (time-utc->date (add-duration (date->time-utc (folder-date))
