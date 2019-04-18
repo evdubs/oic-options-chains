@@ -6,7 +6,6 @@
          racket/list
          racket/port
          racket/sequence
-         racket/set
          racket/string
          srfi/19 ; Time Data Types and Procedures
          sxml
@@ -25,6 +24,23 @@
    theta
    vega
    rho)
+  #:transparent)
+
+(struct history
+  (hv-current
+   hv-week-ago
+   hv-month-ago
+   hv-year-high
+   hv-year-high-date
+   hv-year-low
+   hv-year-low-date
+   iv-current
+   iv-week-ago
+   iv-month-ago
+   iv-year-high
+   iv-year-high-date
+   iv-year-low
+   iv-year-low-date)
   #:transparent)
 
 (define (extract-option xexp offset)
@@ -111,6 +127,60 @@
                                            (filter (λ (o) (equal? s (option-strike o))) f))) target-strikes)))
                   target-expirations))))
 
+(define (append-prior-year target-date day-month-str)
+  (let ([input-this-year (string->date (string-append day-month-str "-" (number->string (date-year target-date)))
+                                      "~d-~b-~Y")]
+        [input-last-year (string->date (string-append day-month-str "-" (number->string (sub1 (date-year target-date))))
+                                      "~d-~b-~Y")]
+        [target-last-year (make-date (date-nanosecond target-date) (date-second target-date) (date-minute target-date)
+                                     (date-hour target-date) (date-day target-date) (date-month target-date)
+                                     (sub1 (date-year target-date)) (date-zone-offset target-date))])
+    (if (and (time>=? (date->time-utc input-this-year) (date->time-utc target-last-year))
+             (time>=? (date->time-utc target-date) (date->time-utc input-this-year)))
+        input-this-year
+        input-last-year)))
+
+(define (get-history html-str date)
+  (let* ([xexp (html->xexp (~> html-str
+                               (string-replace _ "\r\n" "")
+                               (string-replace _ "\t" "")
+                               (string-replace _ "&nbsp;" " ")
+                               (string-replace _ "<nobr>" "")
+                               (string-replace _ "</nobr>" "")))]
+         [history-table-index (length ((sxpath '(html body table tr td table)) xexp))]
+         [hv-current (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 5) (td 2))) xexp)))]
+         [hv-week-ago (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 5) (td 3))) xexp)))]
+         [hv-month-ago (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 5) (td 4))) xexp)))]
+         [hv-year-high (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 5) (td 5))) xexp)))]
+         [hv-year-low (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 5) (td 6))) xexp)))]
+         [iv-current (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 9) (td 2))) xexp)))]
+         [iv-week-ago (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 9) (td 3))) xexp)))]
+         [iv-month-ago (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 9) (td 4))) xexp)))]
+         [iv-year-high (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 9) (td 5))) xexp)))]
+         [iv-year-low (second (first ((sxpath `(html body table tr td (table ,history-table-index) (tr 1) (td 1) table (tr 9) (td 6))) xexp)))])
+    (history hv-current
+             hv-week-ago
+             hv-month-ago
+             (first (string-split hv-year-high " - "))
+             (if (or (string-prefix? hv-year-high "0.00%") (string-prefix? hv-year-high "N/A"))
+                 null
+                 (append-prior-year date (second (string-split hv-year-high " - "))))
+             (first (string-split hv-year-low " - "))
+             (if (or (string-prefix? hv-year-low "0.00%") (string-prefix? hv-year-low "N/A"))
+                 null
+                 (append-prior-year date (second (string-split hv-year-low " - "))))
+             iv-current
+             iv-week-ago
+             iv-month-ago
+             (first (string-split iv-year-high " - "))
+             (if (or (string-prefix? iv-year-high "0.00%") (string-prefix? iv-year-high "N/A"))
+                 null
+                 (append-prior-year date (second (string-split iv-year-high " - "))))
+             (first (string-split iv-year-low " - "))
+             (if (or (string-prefix? iv-year-low "0.00%") (string-prefix? iv-year-low "N/A"))
+                 null
+                 (append-prior-year date (second (string-split iv-year-low " - ")))))))
+
 (define base-folder (make-parameter "/var/tmp/oic/options-chains"))
 
 (define folder-date (make-parameter (current-date)))
@@ -154,7 +224,8 @@
         (λ (in) (let ([html-str (port->string in)])
                   (cond [(not (or (string-contains? html-str "No Options found")
                                   (string-contains? html-str "SEARCH RESULTS")))
-                         (let ([options (get-options html-str)])
+                         (let ([options (get-options html-str)]
+                               [hist (get-history html-str (folder-date))])
                            (with-handlers ([exn:fail? (λ (e) (displayln (string-append "Failed to process "
                                                                                        ticker-symbol
                                                                                        " for date "
@@ -213,6 +284,121 @@ insert into oic.option_chain
                                                      (option-theta o)
                                                      (option-vega o)
                                                      (option-rho o))) options)
+                             (query-exec dbc "
+insert into oic.volatility_history
+(
+  act_symbol,
+  date,
+  hv_current,
+  hv_week_ago,
+  hv_month_ago,
+  hv_year_high,
+  hv_year_high_date,
+  hv_year_low,
+  hv_year_low_date,
+  iv_current,
+  iv_week_ago,
+  iv_month_ago,
+  iv_year_high,
+  iv_year_high_date,
+  iv_year_low,
+  iv_year_low_date
+) values (
+  $1,
+  $2::text::date,
+  case $3
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($3::text::numeric / 100, 4)
+  end,
+  case $4
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($4::text::numeric / 100, 4)
+  end,
+  case $5
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($5::text::numeric / 100, 4)
+  end,
+  case $6
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($6::text::numeric / 100, 4)
+  end,
+  case $7
+    when 'N/A' then null
+    else $7::text::date
+  end,
+  case $8
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($8::text::numeric / 100, 4)
+  end,
+  case $9
+    when 'N/A' then null
+    when '0.00' then null
+    else $9::text::date
+  end,
+  case $10
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($10::text::numeric / 100, 4)
+  end,
+  case $11
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($11::text::numeric / 100, 4)
+  end,
+  case $12
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($12::text::numeric / 100, 4)
+  end,
+  case $13
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($13::text::numeric / 100, 4)
+  end,
+  case $14
+    when 'N/A' then null
+    else $14::text::date
+  end,
+  case $15
+    when 'N/A' then null
+    when '0.00' then null
+    else trunc($15::text::numeric / 100, 4)
+  end,
+  case $16
+    when 'N/A' then null
+    else $16::text::date
+  end
+) on conflict (act_symbol, date) do nothing;
+"
+                                         ticker-symbol
+                                         (date->string (folder-date) "~1")
+                                         (string-replace (history-hv-current hist) "%" "")
+                                         (string-replace (history-hv-week-ago hist) "%" "")
+                                         (string-replace (history-hv-month-ago hist) "%" "")
+                                         (string-replace (history-hv-year-high hist) "%" "")
+                                         (if (null? (history-hv-year-high-date hist))
+                                             "N/A"
+                                             (date->string (history-hv-year-high-date hist) "~1"))
+                                         (string-replace (history-hv-year-low hist) "%" "")
+                                         (if (null? (history-hv-year-low-date hist))
+                                             "N/A"
+                                             (date->string (history-hv-year-low-date hist) "~1"))
+                                         (string-replace (history-iv-current hist) "%" "")
+                                         (string-replace (history-iv-week-ago hist) "%" "")
+                                         (string-replace (history-iv-month-ago hist) "%" "")
+                                         (string-replace (history-iv-year-high hist) "%" "")
+                                         (if (null? (history-iv-year-high-date hist))
+                                             "N/A"
+                                             (date->string (history-iv-year-high-date hist) "~1"))
+                                         (string-replace (history-iv-year-low hist) "%" "")
+                                         (if (null? (history-iv-year-low-date hist))
+                                             "N/A"
+                                             (date->string (history-iv-year-low-date hist) "~1")))
                              (commit-transaction dbc)
                              (set! insert-success-counter (+ insert-success-counter (length options)))))])))))))
 

@@ -22,3 +22,27 @@ CREATE TABLE oic.option_chain
       REFERENCES nasdaq.symbol (act_symbol) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+
+CREATE TABLE oic.volatility_history
+(
+  act_symbol text NOT NULL,
+  date date NOT NULL,
+  hv_current numeric,
+  hv_week_ago numeric,
+  hv_month_ago numeric,
+  hv_year_high numeric,
+  hv_year_high_date date,
+  hv_year_low numeric,
+  hv_year_low_date date,
+  iv_current numeric,
+  iv_week_ago numeric,
+  iv_month_ago numeric,
+  iv_year_high numeric,
+  iv_year_high_date date,
+  iv_year_low numeric,
+  iv_year_low_date date,
+  CONSTRAINT volatility_history_pkey PRIMARY KEY (act_symbol, date),
+  CONSTRAINT volatility_history_act_symbol_fkey FOREIGN KEY (act_symbol)
+      REFERENCES nasdaq.symbol (act_symbol) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
