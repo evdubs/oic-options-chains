@@ -53,7 +53,7 @@
 
 (define dbc (postgresql-connect #:user (db-user) #:database (db-name) #:password (db-pass)))
 
-(define sp500-symbols (query-list dbc "
+(define symbols (query-list dbc "
 select
   component_symbol as symbol
 from
@@ -68,6 +68,13 @@ from
   spdr.etf_holding
 where
   date = (select max(date) from spdr.etf_holding)
+union
+select distinct
+  component_symbol as symbol
+from
+  invesco.etf_holding
+where
+  date = (select max(date) from invesco.etf_holding)
 order by
   symbol;
 "))
@@ -76,11 +83,11 @@ order by
 
 (define delay-interval 10)
 
-(define delays (map (λ (x) (* delay-interval x)) (range 0 (length sp500-symbols))))
+(define delays (map (λ (x) (* delay-interval x)) (range 0 (length symbols))))
 
 (with-task-server (for-each (λ (l) (schedule-delayed-task (λ () (download-options-chains (first l) cnt))
                                                           (second l)))
-                            (map list sp500-symbols delays))
+                            (map list symbols delays))
   ; add a final task that will halt the task server
   (schedule-delayed-task (λ () (schedule-stop-task)) (* delay-interval (length delays)))
   (run-tasks))
