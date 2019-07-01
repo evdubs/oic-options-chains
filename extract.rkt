@@ -11,12 +11,14 @@
          tasks
          threading)
 
-(define cnt
+(define (get-cnt)
   (~> (string->url "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
       (get-pure-port _)
       (port->string _)
       (regexp-match #rx"cnt=([A-F0-9]+)" _)
       (second _)))
+
+(define cnt (get-cnt))
 
 (define (download-options-chains symbol cnt)
   (make-directory* (string-append "/var/tmp/oic/options-chains/" (date->string (current-date) "~1")))
@@ -41,7 +43,7 @@
 (command-line
  #:program "racket extract.rkt"
  #:once-each
-  [("-n" "--db-name") name
+ [("-n" "--db-name") name
                      "Database name. Defaults to 'local'"
                      (db-name name)]
  [("-p" "--db-pass") password
@@ -59,7 +61,7 @@ select
 from
   spdr.etf_holding
 where
-  etf_symbol = 'SPY' and
+  etf_symbol in ('SPY', 'MDY') and
   date = (select max(date) from spdr.etf_holding)
 union
 select distinct
@@ -85,7 +87,9 @@ order by
 
 (define delays (map (λ (x) (* delay-interval x)) (range 0 (length symbols))))
 
-(with-task-server (for-each (λ (l) (schedule-delayed-task (λ () (download-options-chains (first l) cnt))
+(with-task-server (for-each (λ (l) (schedule-delayed-task (λ () (cond [(= 0 (modulo (second l) 3600))
+                                                                       (set! cnt (get-cnt))])
+                                                            (download-options-chains (first l) cnt))
                                                           (second l)))
                             (map list symbols delays))
   ; add a final task that will halt the task server

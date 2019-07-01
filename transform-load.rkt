@@ -129,9 +129,9 @@
 
 (define (append-prior-year target-date day-month-str)
   (let ([input-this-year (string->date (string-append day-month-str "-" (number->string (date-year target-date)))
-                                      "~d-~b-~Y")]
+                                       "~d-~b-~Y")]
         [input-last-year (string->date (string-append day-month-str "-" (number->string (sub1 (date-year target-date))))
-                                      "~d-~b-~Y")]
+                                       "~d-~b-~Y")]
         [target-last-year (make-date (date-nanosecond target-date) (date-second target-date) (date-minute target-date)
                                      (date-hour target-date) (date-day target-date) (date-month target-date)
                                      (sub1 (date-year target-date)) (date-zone-offset target-date))])
