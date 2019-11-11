@@ -1,13 +1,13 @@
 #lang racket/base
 
 (require db
+         gregor
          net/url
          racket/cmdline
          racket/file
          racket/list
          racket/port
          racket/string
-         srfi/19 ; Time Data Types and Procedures
          tasks
          threading)
 
@@ -21,8 +21,8 @@
 (define cnt (get-cnt))
 
 (define (download-options-chains symbol cnt)
-  (make-directory* (string-append "/var/tmp/oic/options-chains/" (date->string (current-date) "~1")))
-  (call-with-output-file (string-append "/var/tmp/oic/options-chains/" (date->string (current-date) "~1") "/" symbol ".html")
+  (make-directory* (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd")))
+  (call-with-output-file (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd") "/" symbol ".html")
     (λ (out) (with-handlers ([exn:fail:network:errno
                               (λ (errno error)
                                 (displayln (string-append "Encountered network error for " symbol))
@@ -61,7 +61,7 @@ select
 from
   spdr.etf_holding
 where
-  etf_symbol in ('SPY', 'MDY') and
+  etf_symbol in ('SPY', 'MDY', 'SLY') and
   date = (select max(date) from spdr.etf_holding)
 union
 select distinct

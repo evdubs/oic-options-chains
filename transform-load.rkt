@@ -1,13 +1,14 @@
 #lang racket/base
 
 (require db
+         gregor
+         gregor/period
          html-parsing
          racket/cmdline
          racket/list
          racket/port
          racket/sequence
          racket/string
-         srfi/19 ; Time Data Types and Procedures
          sxml
          threading)
 
@@ -65,7 +66,7 @@
 (define (flatten-option o)
   (option
    (first (option-underlying o))
-   (string->date (first (option-expiration o)) "~y~m~d")
+   (parse-date (first (option-expiration o)) "yyMMdd")
    (/ (string->number (first (option-strike o))) 1000)
    (first (option-call-put o))
    (string->number (first (option-bid o)) 10 'number-or-false 'decimal-as-exact)
@@ -79,8 +80,8 @@
 
 (define (closest-expiration date options)
   (foldl (λ (o closest)
-           (if (< (abs (time-second (time-difference (date->time-utc date) (date->time-utc (option-expiration o)))))
-                  (abs (time-second (time-difference (date->time-utc date) (date->time-utc (option-expiration closest))))))
+           (if (< (abs (period-ref (period-between date (option-expiration o) '(days)) 'days))
+                  (abs (period-ref (period-between date (option-expiration closest) '(days)) 'days)))
                o
                closest))
          (first options)
@@ -108,12 +109,9 @@
          [target-strikes (list (* mark-price 85/100) (* mark-price 90/100) (* mark-price 93/100) (* mark-price 96/100)
                                (* mark-price 98/100) mark-price (* mark-price 102/100)
                                (* mark-price 104/100) (* mark-price 107/100) (* mark-price 110/100) (* mark-price 115/100))]
-         [target-expirations (list (time-utc->date (add-duration (date->time-utc (folder-date))
-                                                                 (make-time 'time-duration 0 (* 60 60 24 7 2))))
-                                   (time-utc->date (add-duration (date->time-utc (folder-date))
-                                                                 (make-time 'time-duration 0 (* 60 60 24 7 4))))
-                                   (time-utc->date (add-duration (date->time-utc (folder-date))
-                                                                 (make-time 'time-duration 0 (* 60 60 24 7 8)))))]
+         [target-expirations (list (+days (folder-date) (* 7 2))
+                                   (+days (folder-date) (* 7 4))
+                                   (+days (folder-date) (* 7 8)))]
          [all-options (~> (map (λ (exp-table)
                                  (map (λ (row) (list (extract-option row 0) (extract-option row -1)))
                                       ((sxpath '(td table tr)) exp-table)))
@@ -128,15 +126,13 @@
                   target-expirations))))
 
 (define (append-prior-year target-date day-month-str)
-  (let ([input-this-year (string->date (string-append day-month-str "-" (number->string (date-year target-date)))
-                                       "~d-~b-~Y")]
-        [input-last-year (string->date (string-append day-month-str "-" (number->string (sub1 (date-year target-date))))
-                                       "~d-~b-~Y")]
-        [target-last-year (make-date (date-nanosecond target-date) (date-second target-date) (date-minute target-date)
-                                     (date-hour target-date) (date-day target-date) (date-month target-date)
-                                     (sub1 (date-year target-date)) (date-zone-offset target-date))])
-    (if (and (time>=? (date->time-utc input-this-year) (date->time-utc target-last-year))
-             (time>=? (date->time-utc target-date) (date->time-utc input-this-year)))
+  (let ([input-this-year (parse-date (string-append day-month-str "-" (number->string (->year target-date)))
+                                     "dd-MMM-yyyy")]
+        [input-last-year (parse-date (string-append day-month-str "-" (number->string (sub1 (->year target-date))))
+                                     "dd-MMM-yyyy")]
+        [target-last-year (-years target-date 1)])
+    (if (and (date>=? input-this-year target-last-year)
+             (date>=? target-date input-this-year))
         input-this-year
         input-last-year)))
 
@@ -183,7 +179,7 @@
 
 (define base-folder (make-parameter "/var/tmp/oic/options-chains"))
 
-(define folder-date (make-parameter (current-date)))
+(define folder-date (make-parameter (today)))
 
 (define db-user (make-parameter "user"))
 
@@ -199,7 +195,7 @@
                          (base-folder folder)]
  [("-d" "--folder-date") date
                          "OIC options chains folder date. Defaults to today"
-                         (folder-date (string->date date "~Y-~m-~d"))]
+                         (folder-date (iso8601->date date))]
  [("-n" "--db-name") name
                      "Database name. Defaults to 'local'"
                      (db-name name)]
@@ -216,9 +212,9 @@
 (define insert-success-counter 0)
 (define insert-failure-counter 0)
 
-(parameterize ([current-directory (string-append (base-folder) "/" (date->string (folder-date) "~1") "/")])
+(parameterize ([current-directory (string-append (base-folder) "/" (~t (folder-date) "yyyy-MM-dd") "/")])
   (for ([p (sequence-filter (λ (p) (string-contains? (path->string p) ".html")) (in-directory))])
-    (let ([file-name (string-append (base-folder) "/" (date->string (folder-date) "~1") "/" (path->string p))]
+    (let ([file-name (string-append (base-folder) "/" (~t (folder-date) "yyyy-MM-dd") "/" (path->string p))]
           [ticker-symbol (string-replace (path->string p) ".html" "")])
       (call-with-input-file file-name
         (λ (in) (let ([html-str (port->string in)])
@@ -229,7 +225,7 @@
                            (with-handlers ([exn:fail? (λ (e) (displayln (string-append "Failed to process "
                                                                                        ticker-symbol
                                                                                        " for date "
-                                                                                       (date->string (folder-date) "~1")))
+                                                                                       (~t (folder-date) "yyyy-MM-dd")))
                                                         (displayln ((error-value->string-handler) e 1000))
                                                         (rollback-transaction dbc)
                                                         (set! insert-failure-counter (+ insert-failure-counter (length options))))])
@@ -272,10 +268,10 @@ insert into oic.option_chain
 ) on conflict (act_symbol, expiration, strike, call_put, date) do nothing;
 "
                                                      ticker-symbol
-                                                     (date->string (option-expiration o) "~1")
+                                                     (~t (option-expiration o) "yyyy-MM-dd")
                                                      (option-strike o)
                                                      (option-call-put o)
-                                                     (date->string (folder-date) "~1")
+                                                     (~t (folder-date) "yyyy-MM-dd")
                                                      (option-bid o)
                                                      (option-ask o)
                                                      (option-vol o)
@@ -376,29 +372,29 @@ insert into oic.volatility_history
 ) on conflict (act_symbol, date) do nothing;
 "
                                          ticker-symbol
-                                         (date->string (folder-date) "~1")
+                                         (~t (folder-date) "yyyy-MM-dd")
                                          (string-replace (history-hv-current hist) "%" "")
                                          (string-replace (history-hv-week-ago hist) "%" "")
                                          (string-replace (history-hv-month-ago hist) "%" "")
                                          (string-replace (history-hv-year-high hist) "%" "")
                                          (if (null? (history-hv-year-high-date hist))
                                              "N/A"
-                                             (date->string (history-hv-year-high-date hist) "~1"))
+                                             (~t (history-hv-year-high-date hist) "yyyy-MM-dd"))
                                          (string-replace (history-hv-year-low hist) "%" "")
                                          (if (null? (history-hv-year-low-date hist))
                                              "N/A"
-                                             (date->string (history-hv-year-low-date hist) "~1"))
+                                             (~t (history-hv-year-low-date hist) "yyyy-MM-dd"))
                                          (string-replace (history-iv-current hist) "%" "")
                                          (string-replace (history-iv-week-ago hist) "%" "")
                                          (string-replace (history-iv-month-ago hist) "%" "")
                                          (string-replace (history-iv-year-high hist) "%" "")
                                          (if (null? (history-iv-year-high-date hist))
                                              "N/A"
-                                             (date->string (history-iv-year-high-date hist) "~1"))
+                                             (~t (history-iv-year-high-date hist) "yyyy-MM-dd"))
                                          (string-replace (history-iv-year-low hist) "%" "")
                                          (if (null? (history-iv-year-low-date hist))
                                              "N/A"
-                                             (date->string (history-iv-year-low-date hist) "~1")))
+                                             (~t (history-iv-year-low-date hist) "yyyy-MM-dd")))
                              (commit-transaction dbc)
                              (set! insert-success-counter (+ insert-success-counter (length options)))))])))))))
 
