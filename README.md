@@ -21,7 +21,7 @@ and 15% strikes. This suits my purposes, but this filter can be removed if you w
 It is recommended that you start with the standard Racket distribution. With that, you will need to install the following packages:
 
 ```bash
-$ raco pkg install --skip-installed gregor html-parsing
+$ raco pkg install --skip-installed gregor html-parsing sxml tasks threading
 ```
 
 ## dat
