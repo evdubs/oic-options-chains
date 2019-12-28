@@ -40,9 +40,19 @@
 
 (define db-pass (make-parameter ""))
 
+(define first-symbol (make-parameter ""))
+
+(define last-symbol (make-parameter ""))
+
 (command-line
  #:program "racket extract.rkt"
  #:once-each
+ [("-f" "--first-symbol") first
+                          "First symbol to query. Defaults to nothing"
+                          (first-symbol first)]
+ [("-l" "--last-symbol") last
+                         "Last symbol to query. Defaults to nothing"
+                         (last-symbol last)]
  [("-n" "--db-name") name
                      "Database name. Defaults to 'local'"
                      (db-name name)]
@@ -62,24 +72,50 @@ from
   spdr.etf_holding
 where
   etf_symbol in ('SPY', 'MDY', 'SLY') and
-  date = (select max(date) from spdr.etf_holding)
+  date = (select max(date) from spdr.etf_holding) and
+  case when $1 != ''
+    then component_symbol >= $1
+    else true
+  end and
+  case when $2 != ''
+    then component_symbol <= $2
+    else true
+  end
 union
 select distinct
   etf_symbol as symbol
 from
   spdr.etf_holding
 where
-  date = (select max(date) from spdr.etf_holding)
+  date = (select max(date) from spdr.etf_holding) and
+  case when $1 != ''
+    then etf_symbol >= $1
+    else true
+  end and
+  case when $2 != ''
+    then etf_symbol <= $2
+    else true
+  end
 union
 select distinct
   component_symbol as symbol
 from
   invesco.etf_holding
 where
-  date = (select max(date) from invesco.etf_holding)
+  date = (select max(date) from invesco.etf_holding) and
+  case when $1 != ''
+    then component_symbol >= $1
+    else true
+  end and
+  case when $2 != ''
+    then component_symbol <= $2
+    else true
+  end
 order by
   symbol;
-"))
+"
+                            (first-symbol)
+                            (last-symbol)))
 
 (disconnect dbc)
 
