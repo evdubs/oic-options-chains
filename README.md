@@ -16,6 +16,14 @@ option chains for S&P 500/400/600 component companies, Invesco ADR component com
 just insert options expiring 2 weeks, 4 weeks, and 8 weeks from the current date and they will also just grab the +/- 0%, 2%, 4% 7%, 10%, 
 and 15% strikes. This suits my purposes, but this filter can be removed if you want to insert everything.
 
+### Dependencies
+
+It is recommended that you start with the standard Racket distribution. With that, you will need to install the following packages:
+
+```bash
+$ raco pkg install --skip-installed gregor html-parsing sxml tasks threading
+```
+
 ## dat
 
 Historical OIC options chains can be retrieved in CSV form from [dat](https://github.com/datproject/dat) with the following URL:
