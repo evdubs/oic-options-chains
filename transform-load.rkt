@@ -218,8 +218,12 @@
           [ticker-symbol (string-replace (path->string p) ".html" "")])
       (call-with-input-file file-name
         (λ (in) (let ([html-str (port->string in)])
-                  (cond [(not (or (string-contains? html-str "No Options found")
-                                  (string-contains? html-str "SEARCH RESULTS")))
+                  (cond [(or (string-contains? html-str "No Options found")
+                             (string-contains? html-str "SEARCH RESULTS")
+                             (string-contains? html-str "Server too busy. Try it later.")
+                             (not (string-contains? html-str "Implied Volatility is suggested by")))
+                         (displayln (string-append "Unable to retrieve options for " ticker-symbol))]
+                        [else
                          (let ([options (get-options html-str)]
                                [hist (get-history html-str (folder-date))])
                            (with-handlers ([exn:fail? (λ (e) (displayln (string-append "Failed to process "
