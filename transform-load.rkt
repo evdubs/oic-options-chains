@@ -106,9 +106,9 @@
                          (first _)
                          (second _)
                          (string->number _ 10 'number-or-false 'decimal-as-exact))]
-         [target-strikes (list (* mark-price 85/100) (* mark-price 90/100) (* mark-price 93/100) (* mark-price 96/100)
-                               (* mark-price 98/100) mark-price (* mark-price 102/100)
-                               (* mark-price 104/100) (* mark-price 107/100) (* mark-price 110/100) (* mark-price 115/100))]
+         [target-strikes (list (* mark-price 80/100) (* mark-price 85/100) (* mark-price 90/100) (* mark-price 93/100)
+                               (* mark-price 96/100) (* mark-price 98/100) mark-price (* mark-price 102/100) (* mark-price 104/100)
+                               (* mark-price 107/100) (* mark-price 110/100) (* mark-price 115/100) (* mark-price 120/100))]
          [target-expirations (list (+days (folder-date) (* 7 2))
                                    (+days (folder-date) (* 7 4))
                                    (+days (folder-date) (* 7 8)))]
