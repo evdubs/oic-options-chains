@@ -23,11 +23,3 @@ It is recommended that you start with the standard Racket distribution. With tha
 ```bash
 $ raco pkg install --skip-installed gregor html-parsing sxml tasks threading
 ```
-
-## dat
-
-Historical OIC options chains can be retrieved in CSV form from [dat](https://github.com/datproject/dat) with the following URL:
-
-`dat://8eed8dc41ab7ff1ac84ce4c4cf364bf04218b719b601c802ca6bcad46421b748`
-
-You may also view this link on [datbase](https://datbase.org/view?query=dat://8eed8dc41ab7ff1ac84ce4c4cf364bf04218b719b601c802ca6bcad46421b748).
