@@ -23,9 +23,9 @@
 (define (download-options-chains symbol cnt)
   (make-directory* (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd")))
   (call-with-output-file (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd") "/" symbol ".html")
-    (λ (out) (with-handlers ([exn:fail:network:errno
-                              (λ (errno error)
-                                (displayln (string-append "Encountered network error for " symbol))
+    (λ (out) (with-handlers ([exn:fail?
+                              (λ (error)
+                                (displayln (string-append "Encountered error for " symbol))
                                 (displayln ((error-value->string-handler) error 1000)))])
                (~> (string-append "https://oic.ivolatility.com/oic_adv_options.j?cnt=" cnt
                                   "&ticker=" (string-replace symbol "." "/") "&exp_date=-1")
