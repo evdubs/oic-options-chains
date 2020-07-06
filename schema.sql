@@ -1,3 +1,5 @@
+CREATE SCHEMA oic;
+
 CREATE TYPE oic.call_put AS ENUM
    ('Call',
     'Put');
