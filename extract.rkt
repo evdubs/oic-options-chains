@@ -111,6 +111,9 @@ where
     then component_symbol <= $2
     else true
   end
+union
+select
+  'BYND' as symbol
 order by
   symbol;
 "
