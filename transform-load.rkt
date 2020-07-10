@@ -123,11 +123,12 @@
                           (flatten _)
                           (filter (λ (o) (not (empty? (option-underlying o)))) _)
                           (map (λ (o) (flatten-option o)) _))])
-    (flatten (map (λ (te) (let* ([e (option-expiration (closest-expiration te all-options))]
-                                 [f (filter (λ (o) (equal? e (option-expiration o))) all-options)])
-                            (map (λ (ts) (let ([s (option-strike (closest-strike ts f))])
-                                           (filter (λ (o) (equal? s (option-strike o))) f))) target-strikes)))
-                  target-expirations))))
+    (if (all-options?) all-options
+        (flatten (map (λ (te) (let* ([e (option-expiration (closest-expiration te all-options))]
+                                     [f (filter (λ (o) (equal? e (option-expiration o))) all-options)])
+                                (map (λ (ts) (let ([s (option-strike (closest-strike ts f))])
+                                               (filter (λ (o) (equal? s (option-strike o))) f))) target-strikes)))
+                      target-expirations)))))
 
 (define (append-prior-year target-date day-month-str)
   (let ([input-this-year (parse-date (string-append day-month-str "-" (number->string (->year target-date)))
@@ -181,6 +182,8 @@
                  null
                  (append-prior-year date (second (string-split iv-year-low " - ")))))))
 
+(define all-options? (make-parameter #f))
+
 (define base-folder (make-parameter "/var/tmp/oic/options-chains"))
 
 (define folder-date (make-parameter (today)))
@@ -194,6 +197,8 @@
 (command-line
  #:program "racket transform-load.rkt"
  #:once-each
+ [("-a" "--all-options") "Save all options instead of the default select strikes and expirations"
+                         (all-options? #t)]
  [("-b" "--base-folder") folder
                          "OIC options chains base folder. Defaults to /var/tmp/oic/options-chains"
                          (base-folder folder)]
@@ -234,9 +239,9 @@
                                                                                        ticker-symbol
                                                                                        " for date "
                                                                                        (~t (folder-date) "yyyy-MM-dd")))
-                                                        (displayln ((error-value->string-handler) e 1000))
-                                                        (rollback-transaction dbc)
-                                                        (set! insert-failure-counter (+ insert-failure-counter (length options))))])
+                                                         (displayln ((error-value->string-handler) e 1000))
+                                                         (rollback-transaction dbc)
+                                                         (set! insert-failure-counter (+ insert-failure-counter (length options))))])
                              (set! insert-counter (+ insert-counter (length options)))
                              (start-transaction dbc)
                              (for-each (λ (o)
