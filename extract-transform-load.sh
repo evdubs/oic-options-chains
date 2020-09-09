@@ -7,3 +7,5 @@ racket ${dir}/extract.rkt -p "$1"
 racket ${dir}/transform-load.rkt -p "$1"
 
 7zr a /var/tmp/oic/options-chains/${today}.7z /var/tmp/oic/options-chains/${today}/*.html
+
+racket ${dir}/dump-dolt.rkt -p "$1"

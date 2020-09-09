@@ -19,7 +19,7 @@ CREATE TABLE oic.option_chain
   theta numeric,
   vega numeric,
   rho numeric,
-  CONSTRAINT option_chain_pkey PRIMARY KEY (act_symbol, expiration, strike, call_put, date),
+  CONSTRAINT option_chain_pkey PRIMARY KEY (date, act_symbol, expiration, strike, call_put),
   CONSTRAINT option_chain_act_symbol_fkey FOREIGN KEY (act_symbol)
       REFERENCES nasdaq.symbol (act_symbol) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
