@@ -107,7 +107,7 @@
                          (second _)
                          (string->number _ 10 'number-or-false 'decimal-as-exact))]
          [target-strikes (list (* mark-price 70/100) (* mark-price 725/1000) (* mark-price 75/100) (* mark-price 775/1000)
-                               (* mark-price 80/100) (* 825/1000) (* mark-price 85/100) (* mark-price 875/1000)
+                               (* mark-price 80/100) (* mark-price 825/1000) (* mark-price 85/100) (* mark-price 875/1000)
                                (* mark-price 90/100) (* mark-price 92/100) (* mark-price 94/100) (* mark-price 96/100) (* mark-price 98/100)
                                mark-price (* mark-price 102/100) (* mark-price 104/100) (* mark-price 106/100) (* mark-price 108/100)
                                (* mark-price 110/100) (* mark-price 1125/1000) (* mark-price 115/100) (* mark-price 1175/1000)
