@@ -48,3 +48,12 @@ CREATE TABLE oic.volatility_history
       REFERENCES nasdaq.symbol (act_symbol) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+
+CREATE TABLE oic.weekly
+(
+  act_symbol text NOT NULL,
+  effective_date date NOT NULL,
+  last_seen date NOT NULL,
+  CONSTRAINT weekly_pkey PRIMARY KEY (act_symbol),
+  CONSTRAINT weekly_act_symbol_fkey FOREIGN KEY (act_symbol) REFERENCES nasdaq.symbol(act_symbol)
+);
