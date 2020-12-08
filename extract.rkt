@@ -96,21 +96,6 @@ where
     then etf_symbol <= $2
     else true
   end
-union
-select distinct
-  component_symbol as symbol
-from
-  invesco.etf_holding
-where
-  date = (select max(date) from invesco.etf_holding) and
-  case when $1 != ''
-    then component_symbol >= $1
-    else true
-  end and
-  case when $2 != ''
-    then component_symbol <= $2
-    else true
-  end
 order by
   symbol;
 "
@@ -119,11 +104,11 @@ order by
 
 (disconnect dbc)
 
-(define delay-interval 10)
+(define delay-interval 20)
 
 (define delays (map (λ (x) (* delay-interval x)) (range 0 (length symbols))))
 
-(with-task-server (for-each (λ (l) (schedule-delayed-task (λ () (cond [(= 0 (modulo (second l) 3600))
+(with-task-server (for-each (λ (l) (schedule-delayed-task (λ () (cond [(= 0 (modulo (second l) 1800))
                                                                        (set! cnt (get-cnt))])
                                                             (download-options-chains (first l) cnt))
                                                           (second l)))
