@@ -2,7 +2,7 @@
 
 (require db
          gregor
-         net/url
+         net/http-easy
          racket/cmdline
          racket/file
          racket/list
@@ -12,9 +12,9 @@
          threading)
 
 (define (get-cnt)
-  (~> (string->url "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
-      (get-pure-port _)
-      (port->string _)
+  (~> (get "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
+      (response-body _)
+      (bytes->string/utf-8 _)
       (regexp-match #rx"cnt=([A-F0-9]+)" _)
       (second _)))
 
@@ -29,9 +29,9 @@
                                 (displayln ((error-value->string-handler) error 1000)))])
                (~> (string-append "https://oic.ivolatility.com/oic_adv_options.j?cnt=" cnt
                                   "&ticker=" (string-replace symbol "." "/") "&exp_date=-1")
-                   (string->url _)
-                   (get-pure-port _)
-                   (copy-port _ out))))
+                   (get _ #:timeouts (make-timeout-config #:request 120))
+                   (response-body _)
+                   (write-bytes _ out))))
     #:exists 'replace))
 
 (define db-user (make-parameter "user"))

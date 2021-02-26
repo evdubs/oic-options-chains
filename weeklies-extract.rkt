@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require gregor
-         net/url
+         net/http-easy
          racket/port
          threading)
 
@@ -11,7 +11,7 @@
                               (displayln (string-append "Encountered error downloading weeklies list"))
                               (displayln ((error-value->string-handler) error 1000)))])
              (~> "https://marketdata.theocc.com/weekly-options?action=download"
-                 (string->url _)
-                 (get-pure-port _)
-                 (copy-port _ out))))
+                 (get _)
+                 (response-body _)
+                 (write-bytes _ out))))
   #:exists 'replace)

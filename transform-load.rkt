@@ -233,17 +233,17 @@
                              (not (string-contains? html-str "Implied Volatility is suggested by")))
                          (displayln (string-append "Unable to retrieve options for " ticker-symbol))]
                         [else
-                         (let ([options (get-options html-str)]
-                               [hist (get-history html-str (folder-date))])
-                           (with-handlers ([exn:fail? (λ (e) (displayln (string-append "Failed to process "
-                                                                                       ticker-symbol
-                                                                                       " for date "
-                                                                                       (~t (folder-date) "yyyy-MM-dd")))
-                                                         (displayln ((error-value->string-handler) e 1000))
-                                                         (rollback-transaction dbc)
-                                                         (set! insert-failure-counter (+ insert-failure-counter (length options))))])
+                         (with-handlers ([exn:fail? (λ (e) (displayln (string-append "Failed to process "
+                                                                                     ticker-symbol
+                                                                                     " for date "
+                                                                                     (~t (folder-date) "yyyy-MM-dd")))
+                                                       (displayln ((error-value->string-handler) e 1000))
+                                                       (rollback-transaction dbc)
+                                                       (set! insert-failure-counter (add1 insert-failure-counter)))])
+                           (start-transaction dbc)
+                           (let ([options (get-options html-str)]
+                                 [hist (get-history html-str (folder-date))])
                              (set! insert-counter (+ insert-counter (length options)))
-                             (start-transaction dbc)
                              (for-each (λ (o)
                                          (query-exec dbc "
 insert into oic.option_chain
@@ -415,4 +415,4 @@ insert into oic.volatility_history
 
 (displayln (string-append "Attempted to insert " (number->string insert-counter) " rows. "
                           (number->string insert-success-counter) " were successful. "
-                          (number->string insert-failure-counter) " failed."))
+                          (number->string insert-failure-counter) " underlying symbols failed."))
