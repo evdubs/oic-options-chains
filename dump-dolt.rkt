@@ -47,16 +47,16 @@
             (define option-chain-file (string-append (base-folder) "/option-chain-" date ".csv"))
             (call-with-output-file option-chain-file
               (λ (out)
-                (displayln "act_symbol,expiration,strike,call_put,date,bid,ask,vol,delta,gamma,theta,vega,rho" out)
+                (displayln "date,act_symbol,expiration,strike,call_put,bid,ask,vol,delta,gamma,theta,vega,rho" out)
                 (for-each (λ (row)
                             (displayln (string-join (vector->list row) ",") out))
                           (query-rows dbc "
 select
+  date::text,
   act_symbol::text,
   expiration::text,
   strike::text,
   call_put::text,
-  date::text,
   bid::text,
   ask::text,
   vol::text,
@@ -97,13 +97,13 @@ order by
             (define volatility-history-file (string-append (base-folder) "/volatility-history-" date ".csv"))
             (call-with-output-file volatility-history-file
               (λ (out)
-                (displayln "act_symbol,date,hv_current,hv_week_ago,hv_month_ago,hv_year_high,hv_year_high_date,hv_year_low,hv_year_low_date,iv_current,iv_week_ago,iv_month_ago,iv_year_high,iv_year_high_date,iv_year_low,iv_year_low_date" out)
+                (displayln "date,act_symbol,hv_current,hv_week_ago,hv_month_ago,hv_year_high,hv_year_high_date,hv_year_low,hv_year_low_date,iv_current,iv_week_ago,iv_month_ago,iv_year_high,iv_year_high_date,iv_year_low,iv_year_low_date" out)
                 (for-each (λ (row)
                             (displayln (string-join (vector->list row) ",") out))
                           (query-rows dbc "
 select
-  act_symbol::text,
   date::text,
+  act_symbol::text,
   coalesce(hv_current::text, ''),
   coalesce(hv_week_ago::text, ''),
   coalesce(hv_month_ago::text, ''),
