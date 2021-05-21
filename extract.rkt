@@ -12,11 +12,15 @@
          threading)
 
 (define (get-cnt)
-  (~> (get "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
-      (response-body _)
-      (bytes->string/utf-8 _)
-      (regexp-match #rx"cnt=([A-F0-9]+)" _)
-      (second _)))
+  (with-handlers ([exn:fail?
+                   (λ (error)
+                     (displayln (string-append "Encountered error while refreshing cnt."))
+                     (displayln ((error-value->string-handler) error 1000)))])
+    (~> (get "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
+        (response-body _)
+        (bytes->string/utf-8 _)
+        (regexp-match #rx"cnt=([A-F0-9]+)" _)
+        (second _))))
 
 (define cnt (get-cnt))
 
