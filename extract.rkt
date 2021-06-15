@@ -15,7 +15,8 @@
   (with-handlers ([exn:fail?
                    (λ (error)
                      (displayln (string-append "Encountered error while refreshing cnt."))
-                     (displayln ((error-value->string-handler) error 1000)))])
+                     (displayln ((error-value->string-handler) error 1000))
+                     cnt)])
     (~> (get "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
         (response-body _)
         (bytes->string/utf-8 _)
