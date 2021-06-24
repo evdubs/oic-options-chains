@@ -115,7 +115,7 @@ order by
 
 (with-task-server (for-each (λ (l) (schedule-delayed-task (λ () (cond [(= 0 (modulo (second l) 1800))
                                                                        (set! cnt (get-cnt))])
-                                                            (download-options-chains (first l) cnt))
+                                                            (thread (λ () (download-options-chains (first l) cnt))))
                                                           (second l)))
                             (map list symbols delays))
   ; add a final task that will halt the task server
