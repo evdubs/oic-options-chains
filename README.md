@@ -20,8 +20,8 @@ racket extract.rkt [ <option> ... ]
   -u <user>, --db-user <user> : Database user name. Defaults to 'user'
   --help, -h : Show this help
   -- : Do not treat any remaining argument as a switch (at this level)
- Multiple single-letter switches can be combined after one `-'; for
-  example: `-h-' is the same as `-h --'
+ Multiple single-letter switches can be combined after one `-`. For
+  example: `-h-` is the same as `-h --`
 
 $ racket transform-load.rkt -h
 racket transform-load.rkt [ <option> ... ]
@@ -34,8 +34,8 @@ racket transform-load.rkt [ <option> ... ]
   -u <user>, --db-user <user> : Database user name. Defaults to 'user'
   --help, -h : Show this help
   -- : Do not treat any remaining argument as a switch (at this level)
- Multiple single-letter switches can be combined after one `-'; for
-  example: `-h-' is the same as `-h --'
+ Multiple single-letter switches can be combined after one `-`. For
+  example: `-h-` is the same as `-h --`
 ```
 
 The provided `schema.sql` file shows the expected schema within the target PostgreSQL instance. This process assumes you can write to a 
