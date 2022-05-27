@@ -9,7 +9,7 @@
   (λ (out) (with-handlers ([exn:fail?
                             (λ (error)
                               (displayln (string-append "Encountered error downloading weeklies list"))
-                              (displayln ((error-value->string-handler) error 1000)))])
+                              (displayln error))])
              (~> "https://marketdata.theocc.com/weekly-options?action=download"
                  (get _)
                  (response-body _)

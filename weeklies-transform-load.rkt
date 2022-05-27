@@ -48,7 +48,7 @@
                     (with-handlers ([exn:fail?
                                      (λ (error)
                                        (displayln (string-append "Encountered error for " (string-join row ",")))
-                                       (displayln ((error-value->string-handler) error 1000)))])
+                                       (displayln error))])
                       (query-exec dbc "
 insert into oic.weekly (
   act_symbol,

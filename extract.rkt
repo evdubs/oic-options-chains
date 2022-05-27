@@ -15,7 +15,7 @@
   (with-handlers ([exn:fail?
                    (λ (error)
                      (displayln (string-append "Encountered error while refreshing cnt."))
-                     (displayln ((error-value->string-handler) error 1000))
+                     (displayln error)
                      cnt)])
     (~> (get "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
         (response-body _)
@@ -31,7 +31,7 @@
     (λ (out) (with-handlers ([exn:fail?
                               (λ (error)
                                 (displayln (string-append "Encountered error for " symbol))
-                                (displayln ((error-value->string-handler) error 1000)))])
+                                (displayln error))])
                (~> (string-append "https://oic.ivolatility.com/oic_adv_options.j?cnt=" cnt
                                   "&ticker=" (string-replace symbol "." "/") "&exp_date=-1")
                    (get _ #:timeouts (make-timeout-config #:request 120))
