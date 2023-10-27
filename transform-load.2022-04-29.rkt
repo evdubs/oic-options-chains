@@ -386,25 +386,25 @@ insert into oic.volatility_history
 "
                                          ticker-symbol
                                          (~t (folder-date) "yyyy-MM-dd")
-                                         (string-replace (history-hv-current hist) "%" "")
-                                         (string-replace (history-hv-week-ago hist) "%" "")
-                                         (string-replace (history-hv-month-ago hist) "%" "")
-                                         (string-replace (history-hv-year-high hist) "%" "")
+                                         (string-replace (history-hv-current hist) #rx"[,%]" "")
+                                         (string-replace (history-hv-week-ago hist) #rx"[,%]" "")
+                                         (string-replace (history-hv-month-ago hist) #rx"[,%]" "")
+                                         (string-replace (history-hv-year-high hist) #rx"[,%]" "")
                                          (if (null? (history-hv-year-high-date hist))
                                              "N/A"
                                              (~t (history-hv-year-high-date hist) "yyyy-MM-dd"))
-                                         (string-replace (history-hv-year-low hist) "%" "")
+                                         (string-replace (history-hv-year-low hist) #rx"[,%]" "")
                                          (if (null? (history-hv-year-low-date hist))
                                              "N/A"
                                              (~t (history-hv-year-low-date hist) "yyyy-MM-dd"))
-                                         (string-replace (history-iv-current hist) "%" "")
-                                         (string-replace (history-iv-week-ago hist) "%" "")
-                                         (string-replace (history-iv-month-ago hist) "%" "")
-                                         (string-replace (history-iv-year-high hist) "%" "")
+                                         (string-replace (history-iv-current hist) #rx"[,%]" "")
+                                         (string-replace (history-iv-week-ago hist) #rx"[,%]" "")
+                                         (string-replace (history-iv-month-ago hist) #rx"[,%]" "")
+                                         (string-replace (history-iv-year-high hist) #rx"[,%]" "")
                                          (if (null? (history-iv-year-high-date hist))
                                              "N/A"
                                              (~t (history-iv-year-high-date hist) "yyyy-MM-dd"))
-                                         (string-replace (history-iv-year-low hist) "%" "")
+                                         (string-replace (history-iv-year-low hist) #rx"[,%]" "")
                                          (if (null? (history-iv-year-low-date hist))
                                              "N/A"
                                              (~t (history-iv-year-low-date hist) "yyyy-MM-dd")))
