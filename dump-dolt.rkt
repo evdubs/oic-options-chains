@@ -90,7 +90,7 @@ order by
                       (end-date)))
 
 (system (string-append "cd " (base-folder) "; /usr/local/bin/dolt add option_chain; "
-                       "/usr/local/bin/dolt commit -m 'option_chain " (end-date) " update'; /usr/local/bin/dolt push"))
+                       "/usr/local/bin/dolt commit -m 'option_chain " (end-date) " update'; /usr/local/bin/dolt push --silent"))
 
 ; volatility-history
 (for-each (λ (date)
@@ -143,4 +143,4 @@ order by
                       (end-date)))
 
 (system (string-append "cd " (base-folder) "; /usr/local/bin/dolt add volatility_history; "
-                       "/usr/local/bin/dolt commit -m 'volatility_history " (end-date) " update'; /usr/local/bin/dolt push"))
+                       "/usr/local/bin/dolt commit -m 'volatility_history " (end-date) " update'; /usr/local/bin/dolt push --silent"))
