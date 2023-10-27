@@ -71,12 +71,12 @@
 (define dbc (postgresql-connect #:user (db-user) #:database (db-name) #:password (db-pass)))
 
 (define symbols (query-list dbc "
-select
+select distinct
   component_symbol as symbol
 from
   spdr.etf_holding
 where
-  etf_symbol in ('SPY', 'MDY', 'SLY') and
+  etf_symbol in ('SPY', 'MDY', 'SLY', 'SPSM') and
   date = (select max(date) from spdr.etf_holding) and
   case when $1 != ''
     then component_symbol >= $1
