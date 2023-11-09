@@ -17,7 +17,7 @@
                      (displayln (string-append "Encountered error while refreshing cnt."))
                      (displayln error)
                      cnt)])
-    (~> (get "https://www.optionseducation.org/toolsoptionquotes/optionsquotes")
+    (~> (get "https://www.optionseducation.org/toolsoptionquotes/options-quotes")
         (response-body _)
         (bytes->string/utf-8 _)
         (regexp-match #rx"cnt=([A-F0-9]+)" _)
