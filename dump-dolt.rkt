@@ -144,3 +144,5 @@ order by
 
 (system (string-append "cd " (base-folder) "; /usr/local/bin/dolt add volatility_history; "
                        "/usr/local/bin/dolt commit -m 'volatility_history " (end-date) " update'; /usr/local/bin/dolt push --silent"))
+
+(system (string-append "cd " (base-folder) "; /usr/local/bin/dolt gc"))
