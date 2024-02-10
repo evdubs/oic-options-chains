@@ -30,7 +30,7 @@
 (define last-symbol (make-parameter ""))
 
 (command-line
- #:program "racket extract.rkt"
+ #:program "racket extract.2023-11-16.rkt"
  #:once-each
  [("-e" "--email-address") email
                            "Email address used for OIC"
