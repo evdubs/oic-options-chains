@@ -240,20 +240,22 @@ insert into oic.option_chain (
 (define (get-history html-str date)
   (let* ([xexp (html->xexp (~> html-str
                                (string-replace _ "\r\n" "")
+                               (string-replace _ "\n" "")
                                (string-replace _ "\t" "")
                                (string-replace _ "&nbsp;" " ")
+                               (regexp-replace* #rx"[ ]+" _ " ")
                                (string-replace _ "<nobr>" "")
                                (string-replace _ "</nobr>" "")))]
-         [hv-current (second (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 5) (td 2))) xexp)))]
-         [hv-week-ago (second (first ((sxpath '(html body table tr td  (table 2) tr (td 1) table (tr 5) (td 3))) xexp)))]
-         ;[hv-month-ago (second (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 5) (td 4))) xexp)))]
-         [hv-year-high (second (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 5) (td 4))) xexp)))]
-         [hv-year-low (third (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 5) (td 5))) xexp)))]
-         [iv-current (second (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 9) (td 2))) xexp)))]
-         [iv-week-ago (second (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 9) (td 3))) xexp)))]
-         ;[iv-month-ago (second (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 9) (td 4))) xexp)))]
-         [iv-year-high (second (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 9) (td 4))) xexp)))]
-         [iv-year-low (third (first ((sxpath '(html body table tr td (table 2) tr (td 1) table (tr 9) (td 5))) xexp)))])
+         [hv-current (second (first ((sxpath '(html body (table 2) tr (td 1) table (tr 5) (td 2))) xexp)))]
+         [hv-week-ago (second (first ((sxpath '(html body (table 2) tr (td 1) table (tr 5) (td 3))) xexp)))]
+         ;[hv-month-ago (second (first ((sxpath '(html body (table 2) tr (td 1) table (tr 5) (td 4))) xexp)))]
+         [hv-year-high (second (first ((sxpath '(html body (table 2) tr (td 1) table (tr 5) (td 4))) xexp)))]
+         [hv-year-low (third (first ((sxpath '(html body (table 2) tr (td 1) table (tr 5) (td 5))) xexp)))]
+         [iv-current (second (first ((sxpath '(html body (table 2) tr (td 1) table (tr 9) (td 2))) xexp)))]
+         [iv-week-ago (second (first ((sxpath '(html body (table 2) tr (td 1) table (tr 9) (td 3))) xexp)))]
+         ;[iv-month-ago (second (first ((sxpath '(html body (table 2) tr (td 1) table (tr 9) (td 4))) xexp)))]
+         [iv-year-high (second (first ((sxpath '(html body (table 2) tr (td 1) table (tr 9) (td 4))) xexp)))]
+         [iv-year-low (third (first ((sxpath '(html body (table 2) tr (td 1) table (tr 9) (td 5))) xexp)))])
     (history hv-current
              hv-week-ago
              null ; hv-month-ago

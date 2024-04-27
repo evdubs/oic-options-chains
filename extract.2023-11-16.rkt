@@ -225,7 +225,8 @@ order by
         (regexp-match #rx"cnt=([A-F0-9]+)" _)
         (second _))))
 
-(define cnt (get-cnt))
+; (define cnt (get-cnt))
+(define cnt "")
 
 (define (download-volatility symbol)
   (make-directory* (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd")))
@@ -234,8 +235,8 @@ order by
                               (λ (error)
                                 (displayln (string-append "Encountered error for " symbol))
                                 (displayln error))])
-               (~> (string-append "https://oic.ivolatility.com/oic_options.j?cnt=" cnt
-                                  "&ticker=" (string-replace symbol "." "/") "&exp_date=-1")
+               (~> (string-append "https://occ.ivolatility.com/oic_options.j" ; "?cnt=" cnt
+                                  "?ticker=" (string-replace symbol "." "/") "&exp_date=-1")
                    (get _ #:timeouts (make-timeout-config #:request 120))
                    (response-body _)
                    (write-bytes _ out))))
@@ -248,7 +249,8 @@ order by
 (with-task-server
   (for-each (λ (l) (schedule-delayed-task
                     (λ () (cond [(= 0 (modulo (second l) 1800)) (thread (λ () (set! bearer-token (get-bearer-token))
-                                                                           (set! cnt (get-cnt))))])
+                                                                           ;(set! cnt (get-cnt))
+                                                                           ))])
                        (thread (λ () (download-options-chains (first l) (hash-ref symbol-ids (first l)))
                                   (download-volatility (first l)))))
                     (second l)))
