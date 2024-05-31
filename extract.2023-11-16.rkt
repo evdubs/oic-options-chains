@@ -95,18 +95,23 @@
           (bytes->string/utf-8 _)
           (html->xexp)))
 
-    (define data-fetch
-      (cadr (first ((sxpath '(html body div main div (div 1) @ data-fetch)) options-monitor-xexp))))
+    (define new-data-token
+      (cadr (first ((sxpath '(html body div main div (div 1) @ data-token)) options-monitor-xexp))))
 
-    (define data-name
-      (cadr (first ((sxpath '(html body div main div (div 1) @ data-name)) options-monitor-xexp))))
+    ; 2024-05-15 not sure why this part is no longer needed. this may be related to being forced to
+    ; reset the password
+    ;
+    ;(define data-fetch
+    ;  (cadr (first ((sxpath '(html body div main div (div 1) @ data-fetch)) options-monitor-xexp))))
+    ;(define data-name
+    ;  (cadr (first ((sxpath '(html body div main div (div 1) @ data-name)) options-monitor-xexp))))
+    ;(define data-key
+    ;  (cadr (first ((sxpath '(html body div main div (div 1) @ data-key)) options-monitor-xexp))))
+    ;(bytes->string/utf-8 (response-body (post data-fetch
+    ;                                          #:json (hash 'clientKey data-key
+    ;                                                       'clientName data-name))))
 
-    (define data-key
-      (cadr (first ((sxpath '(html body div main div (div 1) @ data-key)) options-monitor-xexp))))
-
-    (bytes->string/utf-8 (response-body (post data-fetch
-                                              #:json (hash 'clientKey data-key
-                                                           'clientName data-name))))))
+    new-data-token))
 
 (define bearer-token (get-bearer-token))
 
