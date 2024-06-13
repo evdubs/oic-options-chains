@@ -121,28 +121,21 @@ where
                                    (+days (folder-date) (* 7 4))
                                    (+days (folder-date) (* 7 8)))]
          [all-options (~> (filter-map
-                           (λ (o) ;(cond [(= -1 (hash-ref o 'call_iv) (hash-ref o 'put_iv)) #f]
-                                        ;[else
+                           (λ (o) (cond [(and (hash-ref o 'call_optionsymbol #f) (hash-ref o 'put_optionsymbol #f))
                                          (list (option ticker-symbol (iso8601->date (hash-ref o 'expirationdate))
                                                        (hash-ref o 'strike) "C"
                                                        (hash-ref o 'call_bid) (hash-ref o 'call_ask)
-                                                       ;(if (= -1 (hash-ref o 'call_iv))
-                                                           ;(hash-ref o 'put_iv)
                                                        (hash-ref o 'call_ivint)
-                                                       ;)
                                                        (hash-ref o 'call_delta) (hash-ref o 'call_gamma) (hash-ref o 'call_theta)
                                                        (hash-ref o 'call_vega) (hash-ref o 'call_rho))
                                                (option ticker-symbol (iso8601->date (hash-ref o 'expirationdate))
                                                        (hash-ref o 'strike) "P"
                                                        (hash-ref o 'put_bid) (hash-ref o 'put_ask)
-                                                       ;(if (= -1 (hash-ref o 'put_iv))
-                                                           ;(hash-ref o 'call_iv)
                                                        (hash-ref o 'put_ivint)
-                                                       ;) 
                                                        (hash-ref o 'put_delta) (hash-ref o 'put_gamma) (hash-ref o 'put_theta)
-                                                       (hash-ref o 'put_vega) (hash-ref o 'put_rho)))
-                                         ;])
-                                         )
+                                                       (hash-ref o 'put_vega) (hash-ref o 'put_rho)))]
+                                        [else #f])
+                             )
                            options-json)
                           (flatten _))])
     (if (all-options?) all-options
@@ -165,9 +158,9 @@ where
                                                                             ticker-symbol
                                                                             " for date "
                                                                             (~t (folder-date) "yyyy-MM-dd")))
-                                              (displayln e)
-                                              (rollback-transaction dbc)
-                                              (set! insert-failure-counter (add1 insert-failure-counter)))])
+                                             (displayln e)
+                                             (rollback-transaction dbc)
+                                             (set! insert-failure-counter (add1 insert-failure-counter)))])
                   (start-transaction dbc)
                   (let* ([options-json (string->jsexpr (port->string in))]
                          [options (get-options ticker-symbol options-json)])
@@ -294,9 +287,9 @@ insert into oic.option_chain (
                                                                                      ticker-symbol
                                                                                      " for date "
                                                                                      (~t (folder-date) "yyyy-MM-dd")))
-                                                       (displayln e)
-                                                       (rollback-transaction dbc)
-                                                       (set! insert-failure-counter (add1 insert-failure-counter)))])
+                                                      (displayln e)
+                                                      (rollback-transaction dbc)
+                                                      (set! insert-failure-counter (add1 insert-failure-counter)))])
                            (start-transaction dbc)
                            (let ([hist (get-history html-str (folder-date))])
                              (set! insert-counter (add1 insert-counter))
