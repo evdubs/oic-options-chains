@@ -104,9 +104,9 @@
 select
   close
 from
-  iex.chart
+  polygon.ohlc
 where
-  date = (select max(date) from iex.chart where act_symbol = $2 and date <= $1::text::date) and
+  date = (select max(date) from polygon.ohlc where act_symbol = $2 and date <= $1::text::date) and
   act_symbol = $2;"
                                   (date->iso8601 (folder-date))
                                   ticker-symbol)]
