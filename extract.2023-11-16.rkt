@@ -57,7 +57,7 @@
 (define (get-bearer-token)
   (with-handlers ([exn:fail?
                    (λ (error)
-                     (displayln (string-append "Encountered error while refreshing bearer-token."))
+                     (displayln (string-append "Encountered error while refreshing bearer-token. The OIC password may need to be reset; login to check."))
                      (displayln error)
                      bearer-token)])
     (define site-rsp (get "https://www.optionseducation.org"
