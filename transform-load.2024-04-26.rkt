@@ -218,7 +218,7 @@ insert into oic.option_chain (
   ; leap year hack
   (define adjusted-day-month-str (if (equal? "29-Feb" day-month-str)
                                      "28-Feb" day-month-str))
-  (let ([input-this-year (parse-date (string-append day-month-str "-" (number->string (->year target-date)))
+  (let ([input-this-year (parse-date (string-append adjusted-day-month-str "-" (number->string (->year target-date)))
                                      "dd-MMM-yyyy")]
         [input-last-year (parse-date (string-append adjusted-day-month-str "-" (number->string (sub1 (->year target-date))))
                                      "dd-MMM-yyyy")]
