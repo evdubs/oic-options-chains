@@ -66,7 +66,7 @@
 
 (define all-options? (make-parameter #f))
 
-(define base-folder (make-parameter "/var/tmp/oic/options-chains"))
+(define base-folder (make-parameter "/var/local/oic/options-chains"))
 
 (define folder-date (make-parameter (today)))
 
@@ -82,7 +82,7 @@
  [("-a" "--all-options") "Save all options instead of the default select strikes and expirations"
                          (all-options? #t)]
  [("-b" "--base-folder") folder
-                         "OIC options chains base folder. Defaults to /var/tmp/oic/options-chains"
+                         "OIC options chains base folder. Defaults to /var/local/oic/options-chains"
                          (base-folder folder)]
  [("-d" "--folder-date") date
                          "OIC options chains folder date. Defaults to today"

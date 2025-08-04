@@ -42,7 +42,7 @@
       (string-append (vector-ref vec 0) "," (vector->csv-line (vector-drop vec 1)))))
 
 (for-each (λ (date)
-            (call-with-output-file (string-append "/var/tmp/dat/oic/option-chain/" date ".csv")
+            (call-with-output-file (string-append "/var/local/dat/oic/option-chain/" date ".csv")
               (λ (out)
                 (displayln "act_symbol,expiration,strike,call_put,date,bid,ask,vol,delta,gamma,theta,vega,rho" out)
                 (for-each (λ (row)

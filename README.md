@@ -27,7 +27,7 @@ $ racket transform-load.rkt -h
 racket transform-load.rkt [ <option> ... ]
  where <option> is one of
   -a, --all-options : Save all options instead of the default select strikes and expirations
-  -b <folder>, --base-folder <folder> : OIC options chains base folder. Defaults to /var/tmp/oic/options-chains
+  -b <folder>, --base-folder <folder> : OIC options chains base folder. Defaults to /var/local/oic/options-chains
   -d <date>, --folder-date <date> : OIC options chains folder date. Defaults to today
   -n <name>, --db-name <name> : Database name. Defaults to 'local'
   -p <password>, --db-pass <password> : Database password
@@ -39,7 +39,7 @@ racket transform-load.rkt [ <option> ... ]
 ```
 
 The provided `schema.sql` file shows the expected schema within the target PostgreSQL instance. This process assumes you can write to a 
-`/var/tmp/oic/options-chains` folder. This process also assumes you have loaded your database with the NASDAQ symbol file information, 
+`/var/local/oic/options-chains` folder. This process also assumes you have loaded your database with the NASDAQ symbol file information,
 SPDR ETF holding information, and Invesco ADR ETF holding information. This data is provided by the 
 [nasdaq-symbols](https://github.com/evdubs/nasdaq-symbols) project, [spdr-etf-holdings](https://github.com/evdubs/spdr-etf-holdings) project, 
 and [invesco-etf-holdings](https://github.com/evdubs/invesco-etf-holdings) project. These programs currently (2019-11-11) will just extract 

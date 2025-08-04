@@ -173,8 +173,8 @@ order by
       (make-immutable-hash _)))
 
 (define (download-options-chains symbol symbol-id)
-  (make-directory* (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd")))
-  (call-with-output-file* (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd") "/" symbol ".json")
+  (make-directory* (string-append "/var/local/oic/options-chains/" (~t (today) "yyyy-MM-dd")))
+  (call-with-output-file* (string-append "/var/local/oic/options-chains/" (~t (today) "yyyy-MM-dd") "/" symbol ".json")
     (λ (out) (with-handlers ([exn:fail?
                               (λ (error)
                                 (displayln (string-append "Encountered error for " symbol))
@@ -234,8 +234,8 @@ order by
 (define cnt "")
 
 (define (download-volatility symbol)
-  (make-directory* (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd")))
-  (call-with-output-file* (string-append "/var/tmp/oic/options-chains/" (~t (today) "yyyy-MM-dd") "/" symbol ".html")
+  (make-directory* (string-append "/var/local/oic/options-chains/" (~t (today) "yyyy-MM-dd")))
+  (call-with-output-file* (string-append "/var/local/oic/options-chains/" (~t (today) "yyyy-MM-dd") "/" symbol ".html")
     (λ (out) (with-handlers ([exn:fail?
                               (λ (error)
                                 (displayln (string-append "Encountered error for " symbol))

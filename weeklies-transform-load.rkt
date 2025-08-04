@@ -36,9 +36,9 @@
 
 (define insert-counter 0)
 
-(displayln (string-append "/var/tmp/oic/weeklies/weeklyoptions." (date->iso8601 (file-date)) ".csv"))
+(displayln (string-append "/var/local/oic/weeklies/weeklyoptions." (date->iso8601 (file-date)) ".csv"))
 
-(call-with-input-file (string-append "/var/tmp/oic/weeklies/weeklyoptions." (date->iso8601 (file-date)) ".csv")
+(call-with-input-file (string-append "/var/local/oic/weeklies/weeklyoptions." (date->iso8601 (file-date)) ".csv")
   (λ (in)
     (~> (sequence->list (in-lines in))
         (map (λ (s) (map (λ (s) (string-trim s))
