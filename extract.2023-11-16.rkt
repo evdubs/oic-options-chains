@@ -181,8 +181,8 @@ order by
                                 (displayln error))])
                (~> (get (string-append "https://private-authorization.ivolatility.com/options-monitor/listOptionDataRow?stockId="
                                        (number->string symbol-id)
-                                       "&center=0&columns=strike&columns=bid&columns=ask&columns=iv&columns=ivint"
-                                       "&columns=delta&columns=gamma&columns=theta&columns=vega&columns=rho")
+                                       "&center=0&columns=strike&columns=bid&columns=ask&columns=theoprice&columns=iv"
+                                       "&columns=ivint&columns=delta&columns=gamma&columns=theta&columns=vega&columns=rho")
                         #:headers (hash 'Authorization (string-append "Bearer " bearer-token))
                         #:timeouts (make-timeout-config #:request 120))
                    (response-body _)
