@@ -122,6 +122,7 @@ where
                                (* mark-price 130/100))]
          [target-expirations (list (+days (folder-date) (* 7 2))
                                    (+days (folder-date) (* 7 4))
+                                   (+days (folder-date) (* 7 6))
                                    (+days (folder-date) (* 7 8)))]
          [all-options (~> (filter-map
                            (λ (o) (cond [(and (hash-ref o 'call_optionsymbol #f) (hash-ref o 'put_optionsymbol #f))
