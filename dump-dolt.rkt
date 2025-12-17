@@ -57,20 +57,20 @@ select
   expiration::text,
   strike::text,
   call_put::text,
-  bid::text,
-  ask::text,
-  vol::text,
-  delta::text,
-  gamma::text,
-  theta::text,
-  vega::text,
-  rho::text
+  trunc(bid, 2)::text,
+  trunc(ask, 2)::text,
+  trunc(vol, 4)::text,
+  trunc(delta, 4)::text,
+  trunc(gamma, 4)::text,
+  trunc(theta, 4)::text,
+  trunc(vega, 4)::text,
+  trunc(rho, 4)::text
 from
   oic.option_chain
 where
   date = $1::text::date
 order by
-  act_symbol, expiration, strike, call_put;
+  act_symbol, expiration, strike::numeric, call_put;
 "
                                       date)))
               #:exists 'replace)
