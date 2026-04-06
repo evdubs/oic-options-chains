@@ -96,7 +96,7 @@
           (html->xexp)))
 
     (define new-data-token
-      (cadr (first ((sxpath '(html body div main div (div 1) @ data-token)) options-monitor-xexp))))
+      (cadr (first ((sxpath '(// (div (@ class (equal? "ivolatility-iframe"))) @ data-token)) options-monitor-xexp))))
 
     ; 2024-05-15 not sure why this part is no longer needed. this may be related to being forced to
     ; reset the password
