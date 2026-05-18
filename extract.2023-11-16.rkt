@@ -71,7 +71,7 @@
                           (html->xexp _)))
 
     (define data-token
-      (cadr (first ((sxpath '(html body div div div @ data-token)) site-xexp))))
+      (cadr (first ((sxpath '(// (div (@ id (equal? "loginPage"))) @ data-token)) site-xexp))))
     
     (define login-headers
       (response-headers (post "https://www.optionseducation.org/api/account/login"
