@@ -3,7 +3,20 @@ CREATE SCHEMA oic;
 CREATE TYPE oic.call_put AS ENUM
    ('Call',
     'Put');
-    
+
+CREATE TABLE oic.atm_curve (
+  "date" date NOT NULL,
+  act_symbol text NOT NULL,
+  expiration date NOT NULL,
+  strike numeric NOT NULL,
+  "call_put" oic."call_put" NOT NULL,
+  bid numeric NULL,
+  ask numeric NULL,
+  vol numeric NULL,
+  CONSTRAINT atm_curve_pkey PRIMARY KEY (date, act_symbol, expiration, strike, call_put),
+  CONSTRAINT atm_curve_act_symbol_fkey FOREIGN KEY (act_symbol) REFERENCES nasdaq.symbol(act_symbol)
+);
+
 CREATE TABLE oic.option_chain
 (
   act_symbol text NOT NULL,

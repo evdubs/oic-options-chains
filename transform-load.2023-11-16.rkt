@@ -64,6 +64,26 @@
          (first options)
          (rest options)))
 
+(define (closest-above-strike-at-expiration strike expiration options)
+  (foldl (λ (o closest)
+           (if (and (< (abs (- strike (option-strike o))) (abs (- strike (option-strike closest))))
+                    (<= strike (option-strike o))
+                    (equal? expiration (option-expiration o)))
+               o
+               closest))
+         (first options)
+         (rest options)))
+
+(define (closest-below-strike-at-expiration strike expiration options)
+  (foldl (λ (o closest)
+           (if (and (< (abs (- strike (option-strike o))) (abs (- strike (option-strike closest))))
+                    (>= strike (option-strike o))
+                    (equal? expiration (option-expiration o)))
+               o
+               closest))
+         (first options)
+         (rest options)))
+
 (define all-options? (make-parameter #f))
 
 (define base-folder (make-parameter "/var/local/oic/options-chains"))
@@ -152,6 +172,45 @@ where
                                                (filter (λ (o) (equal? s (option-strike o))) f))) target-strikes)))
                       target-expirations)))))
 
+(define (get-atm-curve ticker-symbol options-json)
+  (let* ([mark-price (query-value dbc "
+select
+  close
+from
+  polygon.ohlc
+where
+  date = (select max(date) from polygon.ohlc where act_symbol = $2 and date <= $1::text::date) and
+  act_symbol = $2;"
+                                  (date->iso8601 (folder-date))
+                                  ticker-symbol)]
+         [expirations (remove-duplicates (map (λ (o) (iso8601->date (hash-ref o 'expirationdate))) options-json))]
+         [all-options (~> (filter-map
+                           (λ (o) (cond [(and (hash-ref o 'call_optionsymbol #f) (hash-ref o 'put_optionsymbol #f))
+                                         (list (option ticker-symbol (iso8601->date (hash-ref o 'expirationdate))
+                                                       (hash-ref o 'strike) "C"
+                                                       (hash-ref o 'call_bid) (hash-ref o 'call_ask)
+                                                       (hash-ref o 'call_ivint)
+                                                       (hash-ref o 'call_delta) (hash-ref o 'call_gamma) (hash-ref o 'call_theta)
+                                                       (hash-ref o 'call_vega) (hash-ref o 'call_rho))
+                                               (option ticker-symbol (iso8601->date (hash-ref o 'expirationdate))
+                                                       (hash-ref o 'strike) "P"
+                                                       (hash-ref o 'put_bid) (hash-ref o 'put_ask)
+                                                       (hash-ref o 'put_ivint)
+                                                       (hash-ref o 'put_delta) (hash-ref o 'put_gamma) (hash-ref o 'put_theta)
+                                                       (hash-ref o 'put_vega) (hash-ref o 'put_rho)))]
+                                        [else #f]))
+                           options-json)
+                          (flatten _))])
+    (flatten (map (λ (e) (list (closest-above-strike-at-expiration mark-price e
+                                                                   (filter (λ (o) (equal? "C" (option-call-put o))) all-options))
+                               (closest-below-strike-at-expiration mark-price e
+                                                                   (filter (λ (o) (equal? "C" (option-call-put o))) all-options))
+                               (closest-above-strike-at-expiration mark-price e
+                                                                   (filter (λ (o) (equal? "P" (option-call-put o))) all-options))
+                               (closest-below-strike-at-expiration mark-price e
+                                                                   (filter (λ (o) (equal? "P" (option-call-put o))) all-options))))
+                  expirations))))
+
 (define insert-counter 0)
 (define insert-success-counter 0)
 (define insert-failure-counter 0)
@@ -170,7 +229,8 @@ where
                                               (set! insert-failure-counter (add1 insert-failure-counter)))])
                   (start-transaction dbc)
                   (let* ([options-json (string->jsexpr (port->string in))]
-                         [options (get-options ticker-symbol options-json)])
+                         [options (get-options ticker-symbol options-json)]
+                         [atm-curve (get-atm-curve ticker-symbol options-json)])
                     (set! insert-counter (+ insert-counter (length options)))
                     (for-each (λ (o)
                                 (query-exec dbc "
@@ -220,6 +280,40 @@ insert into oic.option_chain (
                                             (option-theta o)
                                             (option-vega o)
                                             (option-rho o))) options)
+                    (for-each (λ (o)
+                                (query-exec dbc "
+insert into oic.atm_curve (
+  date,
+  act_symbol,
+  expiration,
+  strike,
+  call_put,
+  bid,
+  ask,
+  vol
+) values (
+  $1::text::date,
+  $2,
+  $3::text::date,
+  $4,
+  case $5
+    when 'C' then 'Call'::oic.call_put
+    when 'P' then 'Put'::oic.call_put
+  end,
+  $6,
+  $7,
+  $8::decimal / 100
+) on conflict (date, act_symbol, expiration, strike, call_put) do nothing;
+"
+                                            (~t (folder-date) "yyyy-MM-dd")
+                                            ticker-symbol
+                                            (~t (option-expiration o) "yyyy-MM-dd")
+                                            (option-strike o)
+                                            (option-call-put o)
+                                            (option-bid o)
+                                            (option-ask o)
+                                            (option-vol o)))
+                              atm-curve)
                     (commit-transaction dbc)
                     (set! insert-success-counter (+ insert-success-counter (length options))))))))))
 
