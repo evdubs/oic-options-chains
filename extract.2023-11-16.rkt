@@ -82,14 +82,15 @@
                                            'Password (oic-password)))))
     
     (define identity-auth
-      (filter-map (λ (h) (match h [(pregexp #px"identity\\.authentication=([0-9a-zA-Z\\-_]+);" (list str auth))
+      (filter-map (λ (h) (match h [(pregexp #px"\\.AspNetCore\\.Identity\\.Application=([0-9a-zA-Z\\-_]+);" (list str auth))
                                    (bytes->string/utf-8 auth)]
                                 [_ #f]))
                   login-headers))
 
     (define options-monitor-xexp
       (~> (get "https://www.optionseducation.org/toolsoptionquotes/options-monitor"
-               #:headers (hash 'Cookie (string-append "identity.authentication="
+               #:headers (hash 'Cookie (string-append site-cookies
+                                                      ".AspNetCore.Identity.Application="
                                                       (first identity-auth))))
           (response-body _)
           (bytes->string/utf-8 _)
